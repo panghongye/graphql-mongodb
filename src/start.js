@@ -25,7 +25,6 @@ const start = async () => {
     const Comments = db.collection("comments");
 
     const typeDefs = fs.readFileSync("./src/type.gql").toString();
-
     const resolvers = {
       Query: {
         post: async (root, { _id }) => {
