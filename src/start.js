@@ -1,115 +1,90 @@
-import {MongoClient, ObjectId} from 'mongodb'
-import express from 'express'
-import bodyParser from 'body-parser'
-import {graphqlExpress, graphiqlExpress} from 'graphql-server-express'
-import {makeExecutableSchema} from 'graphql-tools'
-import cors from 'cors'
+const { MongoClient, ObjectId } = require("mongodb");
+const cors = require("cors");
+const express = require("express");
+const bodyParser = require("body-parser");
 
-const URL = 'http://localhost'
-const PORT = 3001
-const MONGO_URL = 'mongodb://localhost:27017/blog'
+const { makeExecutableSchema } = require("graphql-tools");
+const { graphqlExpress, graphiqlExpress } = require("apollo-server-express");
+const voyager = require("graphql-voyager/middleware").express;
+const graphqlHTTP = require("express-graphql");
 
-const prepare = (o) => {
-  o._id = o._id.toString()
-  return o
-}
+const URL = "http://localhost";
+const MONGO_URL = "mongodb://localhost:27017/blog";
 
-export const start = async () => {
+const fs = require("fs");
+
+const prepare = objectId => {
+  objectId._id = objectId._id.toString();
+  return objectId;
+};
+
+const start = async () => {
   try {
-    const db = await MongoClient.connect(MONGO_URL)
+    const db = await MongoClient.connect(MONGO_URL);
+    const Posts = db.collection("posts");
+    const Comments = db.collection("comments");
 
-    const Posts = db.collection('posts')
-    const Comments = db.collection('comments')
-
-    const typeDefs = [`
-      type Query {
-        post(_id: String): Post
-        posts: [Post]
-        comment(_id: String): Comment
-      }
-
-      type Post {
-        _id: String
-        title: String
-        content: String
-        comments: [Comment]
-      }
-
-      type Comment {
-        _id: String
-        postId: String
-        content: String
-        post: Post
-      }
-
-      type Mutation {
-        createPost(title: String, content: String): Post
-        createComment(postId: String, content: String): Comment
-      }
-
-      schema {
-        query: Query
-        mutation: Mutation
-      }
-    `];
+    const typeDefs = fs.readFileSync("./src/type.gql").toString();
 
     const resolvers = {
       Query: {
-        post: async (root, {_id}) => {
-          return prepare(await Posts.findOne(ObjectId(_id)))
+        post: async (root, { _id }) => {
+          return prepare(await Posts.findOne(ObjectId(_id)));
         },
         posts: async () => {
-          return (await Posts.find({}).toArray()).map(prepare)
+          return (await Posts.find({}).toArray()).map(prepare);
         },
-        comment: async (root, {_id}) => {
-          return prepare(await Comments.findOne(ObjectId(_id)))
-        },
+        comment: async (root, { _id }) => {
+          return prepare(await Comments.findOne(ObjectId(_id)));
+        }
       },
       Post: {
-        comments: async ({_id}) => {
-          return (await Comments.find({postId: _id}).toArray()).map(prepare)
+        comments: async ({ _id }) => {
+          return (await Comments.find({ postId: _id }).toArray()).map(prepare);
         }
       },
       Comment: {
-        post: async ({postId}) => {
-          return prepare(await Posts.findOne(ObjectId(postId)))
+        post: async ({ postId }) => {
+          return prepare(await Posts.findOne(ObjectId(postId)));
         }
       },
       Mutation: {
         createPost: async (root, args, context, info) => {
-          const res = await Posts.insert(args)
-          return prepare(await Posts.findOne({_id: res.insertedIds[1]}))
+          const res = await Posts.insert(args);
+          return prepare(await Posts.findOne({ _id: res.insertedIds[1] }));
         },
         createComment: async (root, args) => {
-          const res = await Comments.insert(args)
-          return prepare(await Comments.findOne({_id: res.insertedIds[1]}))
-        },
-      },
-    }
+          const res = await Comments.insert(args);
+          return prepare(await Comments.findOne({ _id: res.insertedIds[1] }));
+        }
+      }
+    };
 
     const schema = makeExecutableSchema({
       typeDefs,
       resolvers
-    })
+    });
 
-    const app = express()
+    const app = express();
 
-    app.use(cors())
+    app.use(cors());
 
-    app.use('/graphql', bodyParser.json(), graphqlExpress({schema}))
+    const endpointURL = "/api/gql";
 
-    const homePath = '/graphiql'
+    // GUI
+    app.use(endpointURL + "/ide", graphiqlExpress({ endpointURL }));
+    app.use(endpointURL + "/gui", voyager({ endpointUrl: endpointURL }));
 
-    app.use(homePath, graphiqlExpress({
-      endpointURL: '/graphql'
-    }))
+    // API
+    app.use(endpointURL, graphqlHTTP({ schema, graphiql: false }));
 
-    app.listen(PORT, () => {
-      console.log(`Visit ${URL}:${PORT}${homePath}`)
-    })
-
+    app.listen(5000, () => {
+      console.log(`http://localhost:${5000}${endpointURL}/ide`);
+      console.log(`http://localhost:${5000}${endpointURL}/gui`);
+    });
   } catch (e) {
-    console.log(e)
+    console.log(e);
   }
+};
 
-}
+module.exports = start;

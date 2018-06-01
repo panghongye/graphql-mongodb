@@ -1,5 +1,4 @@
-import 'babel-core/register'
-import 'babel-polyfill'
-import {start} from './start'
+const start = require("./start");
+console.log(start);
 
-start()
+start();
