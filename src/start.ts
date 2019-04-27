@@ -1,4 +1,5 @@
-const { MongoClient, ObjectId } = require("mongodb");
+import { MongoClient, ObjectId } from "mongodb"
+
 const express = require("express");
 const { makeExecutableSchema } = require("graphql-tools");
 const { graphiqlExpress } = require("apollo-server-express");;

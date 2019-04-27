@@ -9,6 +9,5 @@
     ],
     "outDir": "./dist",
     "sourceMap": true,
-    "target": "es5"
   }
 }
