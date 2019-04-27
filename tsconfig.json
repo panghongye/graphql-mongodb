@@ -1,8 +1,14 @@
 {
-    "compilerOptions": {
-        "target": "es6"
-    },
-    "exclude": [
-        "node_modules"
+  "compileOnSave": true,
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "lib": [
+      "dom",
+      "esnext"
     ],
+    "outDir": "./dist",
+    "sourceMap": true,
+    "target": "es5"
+  }
 }

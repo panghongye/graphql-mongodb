@@ -1,21 +1,17 @@
 const { MongoClient, ObjectId } = require("mongodb");
 const express = require("express");
 const { makeExecutableSchema } = require("graphql-tools");
-const { graphqlExpress, graphiqlExpress } = require("apollo-server-express");
+const { graphiqlExpress } = require("apollo-server-express");;
 const voyager = require("graphql-voyager/middleware").express;
 const graphqlHTTP = require("express-graphql");
 const fs = require("fs");
-
-const URL = "http://localhost";
-const MONGO_URL = "mongodb://localhost:27017/blog";
-const app = express();
-
+const app = express()
 const start = async () => {
+  const MONGO_URL = "mongodb://localhost:27017/blog"
   try {
     const db = await MongoClient.connect(MONGO_URL);
     const Posts = db.collection("posts");
     const Comments = db.collection("comments");
-
     const typeDefs = fs.readFileSync("./src/type.gql").toString();
     const resolvers = {
       Query: {
@@ -41,30 +37,20 @@ const start = async () => {
       },
       Mutation: {
         createPost: async (root, args, context, info) => {
-          let r = await Posts.insert(args)
-          return r.ops[0]
+          let r = await Posts.insert(args);
+          return r.ops[0];
         },
         createComment: async (root, args) => {
-          let r = await Comments.insert(args)
-          return r.ops[0]
+          let r = await Comments.insert(args);
+          return r.ops[0];
         }
       }
     };
-
-    const schema = makeExecutableSchema({
-      typeDefs,
-      resolvers
-    });
-
+    const schema = makeExecutableSchema({ typeDefs, resolvers });
     const endpointURL = "/api/gql";
-
-    // GUI
     app.use(endpointURL + "/ide", graphiqlExpress({ endpointURL }));
     app.use(endpointURL + "/gui", voyager({ endpointUrl: endpointURL }));
-
-    // API
-    app.use(endpointURL, graphqlHTTP({ schema, graphiql: false }));
-
+    app.use(endpointURL, graphqlHTTP({ schema, graphiql: false })); // api
     app.listen(5000, () => {
       console.info(`http://localhost:${5000}${endpointURL}/ide`);
       console.info(`http://localhost:${5000}${endpointURL}/gui`);
@@ -76,4 +62,8 @@ const start = async () => {
 
 start();
 
-export default start;
+import { observable } from "mobx";
+class B {
+  @observable a = 1 
+}
+new B();
