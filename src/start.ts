@@ -1,16 +1,14 @@
 const { MongoClient, ObjectId } = require("mongodb");
-// const cors = require("cors");
 const express = require("express");
-
 const { makeExecutableSchema } = require("graphql-tools");
 const { graphqlExpress, graphiqlExpress } = require("apollo-server-express");
 const voyager = require("graphql-voyager/middleware").express;
 const graphqlHTTP = require("express-graphql");
+const fs = require("fs");
 
 const URL = "http://localhost";
 const MONGO_URL = "mongodb://localhost:27017/blog";
-
-const fs = require("fs");
+const app = express();
 
 const start = async () => {
   try {
@@ -33,7 +31,7 @@ const start = async () => {
       },
       Post: {
         comments: async ({ _id }) => {
-          return (await Comments.find({ postId: _id }).toArray()).map();
+          return await Comments.find({ postId: _id }).toArray();
         }
       },
       Comment: {
@@ -44,11 +42,11 @@ const start = async () => {
       Mutation: {
         createPost: async (root, args, context, info) => {
           const res = await Posts.insert(args);
-          return await Posts.findOne({ _id: res.insertedIds[1] });
+          return await Posts.findOne({ _id: res.ops[0] });
         },
         createComment: async (root, args) => {
           const res = await Comments.insert(args);
-          return await Comments.findOne({ _id: res.insertedIds[1] });
+          return await Comments.findOne({ _id: res.ops[0] });
         }
       }
     };
@@ -57,10 +55,6 @@ const start = async () => {
       typeDefs,
       resolvers
     });
-
-    const app = express();
-
-    // app.use(cors());
 
     const endpointURL = "/api/gql";
 
