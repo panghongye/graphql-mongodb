@@ -1,5 +1,5 @@
 import { MongoClient, ObjectId } from "mongodb"
-
+import * as DataLoader from 'dataloader'
 const express = require("express");
 const { makeExecutableSchema } = require("graphql-tools");
 const { graphiqlExpress } = require("apollo-server-express");;
@@ -14,10 +14,16 @@ const start = async () => {
     const Posts = db.collection("posts");
     const Comments = db.collection("comments");
     const typeDefs = fs.readFileSync("./src/type.gql").toString();
+
+    let postLoader = new DataLoader(async _id => {
+      return Promise.all(_id.map(i => Posts.findOne(ObjectId(i))))
+    })
+
     const resolvers = {
       Query: {
         post: async (root, { _id }) => {
-          return await Posts.findOne(ObjectId(_id));
+          let d= await postLoader.load(_id)
+          return d
         },
         posts: async () => {
           return await Posts.find({}).toArray();
