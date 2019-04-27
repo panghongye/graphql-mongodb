@@ -41,12 +41,12 @@ const start = async () => {
       },
       Mutation: {
         createPost: async (root, args, context, info) => {
-          const res = await Posts.insert(args);
-          return await Posts.findOne({ _id: res.ops[0] });
+          let r = await Posts.insert(args)
+          return r.ops[0]
         },
         createComment: async (root, args) => {
-          const res = await Comments.insert(args);
-          return await Comments.findOne({ _id: res.ops[0] });
+          let r = await Comments.insert(args)
+          return r.ops[0]
         }
       }
     };
